@@ -1,0 +1,90 @@
+---
+title: "2_limma"
+format: html
+editor: visual
+---
+
+Load in data and metadata
+
+```{r, message=FALSE, error=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+source("R/libraries.R")
+source("R/functions.R")
+
+
+metadata <- read_excel('data-raw/limma_design.xlsx') %>%
+    column_to_rownames(var="sample") %>%
+    mutate_all(factor)
+
+#Load in SummarizedExperiment file
+load(here::here("data/se_raw.rda"))
+
+```
+
+Filter data
+
+```{r}
+#Filter for valid values of 70% in at least one group
+se <- selectGrps(se_raw, colData(se_raw)$intervention, 0.7, n=1)
+
+#Save to data folder
+usethis::use_data(se, overwrite = TRUE)
+
+```
+
+Analysis, terbutaline
+
+```{r}
+
+design <- model.matrix(~0+ se$intervention)
+
+colnames(design)=c("pbs", "terbutaline")
+
+
+contrasts <- makeContrasts(terbutaline - pbs,
+                             levels = design)
+
+fit <- eBayes(lmFit(assay(se), design))
+
+fit2 <- eBayes(contrasts.fit(fit, contrasts))
+
+
+results <- topTable(fit2, coef = 1, number = Inf, sort.by = "logFC") %>% 
+    mutate(xiao=10^-(sqrt(log10(1/(P.Value^logFC))^2))) %>% 
+    arrange(desc(logFC))
+
+results <- results %>% 
+    mutate(protein = row.names(results)) %>% 
+    mutate(q = qvalue(results$P.Value)$qvalues) %>% 
+    mutate("-log10p" = -log10(results$P.Value)) %>% 
+    mutate(regulated = case_when(xiao < 0.05 ~ "+"))
+
+
+write_xlsx(as.data.frame(results), 'data/limma/results.xlsx')
+
+write_xlsx(as.data.frame(dplyr::filter(results, logFC>0 & xiao < 0.05)), 'data/limma/results_upregulated.xlsx')
+
+write_xlsx(as.data.frame(dplyr::filter(results, logFC<0 & xiao < 0.05)), 'data/limma/results_downregulated.xlsx')
+
+write_xlsx(as.data.frame(dplyr::filter(results, xiao > 0.05)), 'data/limma/results_unchanged.xlsx')
+
+#Save results to 'data' folder
+usethis::use_data(results, overwrite = TRUE)
+```
+
+
+**qvalue inspection**
+
+```{r}
+q_values <- qvalue(p = results$P.Value)
+```
+
+```{r}
+q_values$pi0
+summary(q_values)
+hist(q_values)
+plot(q_values)
+```
+

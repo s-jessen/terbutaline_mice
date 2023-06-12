@@ -1,0 +1,59 @@
+---
+title: "3_gsea"
+format: html
+editor: visual
+---
+
+```{r, message=FALSE, error=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+source(here::here("R/libraries.R"))
+source(here::here("R/functions.R"))
+load(file='data/results.rda')
+load(file='data/metadata.rda')
+
+
+set.seed(123)
+```
+
+GSEA ter, BP
+
+```{r}
+
+#Remove NA's
+results <- results %>% 
+    dplyr::filter(!is.na(logFC))
+
+#Preparation of ranked protein list (GO:BP)
+gsea_list <- as.numeric(results$logFC)
+
+names(gsea_list)=as.character(results$protein)
+
+
+#GSEA analysis (GO:BP)
+gsea_bp <- gseGO(
+                    geneList = gsea_list,
+                    OrgDb = org.Mm.eg.db,
+                    ont = "BP",
+                    pvalueCutoff = 0.05,
+                    keyType = "SYMBOL",
+                    eps=0,
+                    maxGSSize = 200
+                    )
+
+#Filter for redundancy of GO-terms. 
+gsea_bp_filtered <- clusterProfiler::simplify(gsea_bp, cutoff=0.6, by="p.adjust", select_fun=min)
+
+#Create dotplot
+dotplot(gsea_bp, showCategory=10, title="GO:BP")+facet_grid(.~.sign, labeller=as_labeller(c(
+    `activated` = "Enriched",
+    `suppressed` = "Depleted")))
+
+#Save as excel file
+write_xlsx(as.data.frame(gsea_bp_filtered), 'data/gsea/gsea_bp.xlsx')
+
+#Save to data folder
+usethis::use_data(gsea_bp_filtered, overwrite = TRUE)
+```
+

@@ -1,0 +1,135 @@
+---
+title: "3_heatmaps"
+format: html
+editor: visual
+---
+
+```{r, message=FALSE, error=FALSE}
+source("R/libraries.R")
+source("R/functions.R")
+source("R/data_files_and_results.R")
+source("R/metadata.R")
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+set.seed(123)
+```
+
+Heatmap of baseline samples
+
+```{r}
+
+df_heatmap_baseline <- assay(se[, se$time== 'pre'])
+
+#Heatmap
+heatmap_baseline <- pheatmap(df_heatmap_baseline,
+    scale = "row",
+    cluster_rows = F,
+    annotation_col = dplyr::select(metadata, "intervention"),
+    annotation_colors=list(intervention=c(terbutaline="#C06C84",resistance="#355C7D")),
+    clustering_distance_cols="euclidean",
+    show_rownames = F,
+    color=colorRampPalette(c("navy", "white", "red"))(50),
+    cellwidth =5,
+    border_color = NA
+    )
+
+```
+
+All samples, annotated for time
+
+```{r}
+df_heatmap_all <- assay(se)
+
+#Heatmap
+heatmap_all <- pheatmap(df_heatmap_all,
+    scale = "row",
+    cluster_rows = F,
+    annotation_col = dplyr::select(metadata, "time"),
+    annotation_colors=list(time=c(pre="#C06C84", post="#355C7D")),
+    clustering_distance_cols="euclidean",
+    show_rownames = F,
+    color=colorRampPalette(c("navy", "white", "red"))(50),
+    cellwidth =5,
+    border_color = NA
+    )
+
+```
+
+Log2fold changes
+
+```{r}
+#Create l2fc dataframe
+df_heatmap_l2fc <- df_long_l2fc %>% 
+    dplyr::select(c("sample", "protein", "l2fc")) %>% 
+    pivot_wider(names_from = sample, values_from = l2fc) %>% 
+    column_to_rownames("protein")
+
+heatmap_l2fc <- pheatmap(df_heatmap_l2fc,
+    scale = "row",
+    cluster_rows = F,
+    annotation_col = dplyr::select(metadata, "intervention"),
+    annotation_colors=list(intervention=c(terbutaline="#C06C84", resistance="#355C7D")),
+    clustering_distance_cols="euclidean",
+    show_rownames = F,
+    color=colorRampPalette(c("navy", "white", "red"))(50),
+    cellwidth =5,
+    border_color = NA
+    )
+
+ggsave('data/figures/heatmaps/heatmap_l2fc.pdf', plot=heatmap_l2fc)
+```
+
+Only regulated proteins (l2fc)
+
+```{r}
+
+#Load dataset, filter for only proteins that are regulated in either intervention
+df_regulated_l2fc <- df_long_l2fc %>% 
+    dplyr::select(c("sample", "protein", "l2fc")) %>% 
+    pivot_wider(names_from = sample, values_from = l2fc) %>% 
+    inner_join(results_ter_t[,c("protein","regulated")], by="protein") %>% 
+    inner_join(results_res_t[,c("protein","regulated")], by="protein") %>% 
+    dplyr::filter(regulated.x == "+" | regulated.y == "+") %>% 
+    column_to_rownames("protein") %>% 
+    dplyr::select(-c("regulated.x", "regulated.y"))
+    
+#Heatmap                  
+heatmap_regulated <- pheatmap(df_regulated_l2fc,
+    scale = "row",
+    cluster_rows = F,
+    annotation_col = dplyr::select(metadata, "intervention"),
+    annotation_colors=list(intervention=c(terbutaline="#C06C84", resistance="#355C7D")),
+    show_rownames = F,
+    color=colorRampPalette(c("navy", "white", "red"))(50),
+    cellwidth =5,
+    border_color = NA
+    )
+```
+
+Only mitochondrial (l2fc ter vs. res)
+
+```{r}
+mitocarta <- read_excel('data/mitocarta.xls')%>% 
+    dplyr::select('symbol', 'pathways') %>% 
+    dplyr::rename(protein=symbol)
+
+df_long_mito <- merge(df_long_l2fc, mitocarta, by="protein") %>%
+    dplyr::select(c("sample", "protein", "l2fc")) %>% 
+    pivot_wider(names_from = sample, values_from = l2fc) %>% 
+    column_to_rownames("protein")
+
+heatmap_mito <- pheatmap(df_long_mito,
+    scale = "row",
+    cluster_rows = F,
+    annotation_col = dplyr::select(metadata, "intervention"),
+    annotation_colors=list(intervention=c(terbutaline="#C06C84", resistance="#355C7D")),
+    show_rownames = F,
+    color=colorRampPalette(c("navy", "white", "red"))(50),
+    cellwidth =5,
+    border_color = NA,
+    cluster_cols = FALSE
+    )
+
+
+```

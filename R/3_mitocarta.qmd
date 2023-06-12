@@ -1,0 +1,158 @@
+---
+title: "3_mitochondrial"
+format: html
+editor: visual
+---
+
+```{r, message=FALSE, error=FALSE}
+source("R/libraries.R")
+source("R/functions.R")
+source("R/data_files_and_results.R")
+source("R/metadata.R")
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+set.seed(123)
+```
+
+```{r, message=FALSE, error=FALSE}
+mitocarta <- read_excel('data/mitocarta.xls')%>% 
+    dplyr::select('symbol', 'pathways') %>% 
+    dplyr::rename(protein=symbol)
+
+df_figures_mito <- merge(df_long_l2fc, mitocarta, by="protein")
+```
+
+Filtering for mitochondrial proteins and creating individual data sets for each complex. Combine into 1 df.
+
+```{r}
+CI <- df_figures_mito%>% 
+    dplyr::filter((grepl("CI subunit", pathways))) %>% 
+    mutate(complex="CI")
+
+CII <- df_figures_mito%>% 
+    dplyr::filter((grepl("CII subunit", pathways)))%>% 
+    mutate(complex="CII")
+
+CIII <- df_figures_mito%>% 
+    dplyr::filter((grepl("CIII subunit", pathways)))%>% 
+    mutate(complex="CIII")
+
+CIV <- df_figures_mito%>% 
+    dplyr::filter((grepl("CIV subunit", pathways)))%>% 
+    mutate(complex="CIV")
+
+CV <- df_figures_mito%>% 
+    dplyr::filter((grepl("CV subunit", pathways)))%>% 
+    mutate(complex="CV")
+
+complexes <- rbind(CI, CII, CIII, CIV, CV)
+```
+
+Visualize
+
+```{r}
+
+complexes %>% 
+    ggplot(aes(x=l2fc, y=complex, color=intervention)) + 
+    geom_point(position = position_jitterdodge(), na.rm=TRUE)+
+    geom_boxplot(outlier.shape = NA, alpha=0.5, na.rm=TRUE)+
+    geom_vline(xintercept=0, linetype="dashed")+
+    theme(
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        panel.background = element_blank(),
+        panel.grid.minor=element_blank(),
+        panel.grid.major = element_blank(),
+        plot.background = element_blank(),
+        axis.line = element_line(color="black", size=0.5),
+        axis.text = element_text(color="black", size=20),
+        text = element_text(size = 20),
+        legend.position = "none"
+        )+
+    scale_color_manual(values=c("#C06C84", "#355C7D"), 
+                      name = "Intervention",
+                      labels = c("Resistance training",
+                                 "Terbutaline treatment"))+
+    ylab("Complexes")
+    
+```
+
+Distributions
+
+```{r}
+CIV %>% 
+    ggplot(aes(x=l2fc, y=protein, fill=intervention))+
+    geom_density_ridges(alpha=0.5)+
+    scale_color_manual(values=c("#C06C84", "#355C7D"))+
+    scale_fill_manual(values=c("#C06C84", "#355C7D"), 
+                      name = "Intervention",
+                      labels = c("Resistance training",
+                                 "Terbutaline treatment"))+
+    ylab("Proteins annotated to complex IV")+
+    theme(
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        panel.grid.minor=element_blank(),
+        panel.grid.major = element_blank(),
+        text = element_text(size = 15),
+        axis.text = element_text(color="black"),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank()
+        )+
+    geom_vline(xintercept=0, linetype="dashed")
+```
+
+Annotate l2fc file with go-terms
+
+```{r}
+df_long_l2fc$go <-   mapIds(org.Hs.eg.db,
+                     keys=df_long_l2fc$protein,
+                     column="GO",
+                     keytype="SYMBOL",
+                     multiVals="list") 
+```
+
+```{r}
+go_translation <- df_long_l2fc %>% 
+    dplyr::filter(grepl("GO:0006412", go)) %>% 
+    dplyr::mutate(desc="Translation")
+
+go_cellular_resp <- df_long_l2fc %>% 
+    dplyr::filter(grepl("GO:0045333", go)) %>% 
+    dplyr::mutate(desc="Cellular respiration")
+
+go_proton_driven <- df_long_l2fc %>% 
+    dplyr::filter(grepl("GO:0042776", go)) %>% 
+    dplyr::mutate(desc="Proton motive force-driven mitochondrial ATP synthesis")
+
+go_actin <- df_long_l2fc %>% 
+    dplyr::filter(grepl("GO:0030036", go)) %>% 
+    dplyr::mutate(desc="actin cytoskeleton organization")
+
+go_term_figure <- rbind(go_translation, go_cellular_resp, go_proton_driven, go_actin)
+```
+
+go-term figure
+
+```{r}
+go_term_figure %>% 
+    ggplot(aes(x=l2fc, y=desc, fill=intervention))+
+    geom_boxplot(outlier.shape = NA, alpha=1, na.rm=TRUE)+
+    geom_point(alpha=0.04, na.rm=TRUE, height=0.2, position = position_jitterdodge())+
+    geom_vline(xintercept=0, linetype="dashed")+
+    theme(
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        panel.grid.minor=element_blank(),
+        panel.grid.major = element_blank(),
+        axis.line = element_line(color="black", size=0.5),
+        axis.text = element_text(color="black"),
+        text = element_text(size = 12)
+        )+
+    scale_fill_manual(values=c("#355C7D", "#C06C84"), name = "Intervention", labels = c("Resistance training", "Terbutaline treatment"))+
+    ylab("GO:BP terms")+
+    xlim(-1,1)
+
+ggsave('data/figures/selected_go_terms.pdf', width=15)
+    
+```

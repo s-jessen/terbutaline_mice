@@ -1,0 +1,56 @@
+---
+title: "1_data_preparation"
+format: html
+editor: visual
+---
+
+```{r, message=FALSE, error=FALSE}
+source(here::here("R/libraries.R"))
+source(here::here("R/functions.R"))
+
+metadata <- read_excel('data-raw/limma_design.xlsx') %>%
+    column_to_rownames(var="sample") %>%
+    mutate_all(factor)
+
+usethis::use_data(metadata, overwrite = TRUE)
+```
+
+```{r}
+
+df <- read_xlsx('data-raw/gastroc_v2.xlsx') %>% 
+    dplyr::select(-c(1:3, 5)) %>% 
+    mutate(genes = gsub(";.*", "", genes)) %>% 
+    mutate_at(2:16, as.numeric) %>% 
+    dplyr::filter(genes != "") %>% 
+    mutate(genes = make.names(genes, unique=TRUE), genes) %>% #Massive problems with dupliace gene names
+    column_to_rownames(var="genes") %>% 
+    mutate_if(is.numeric, log2)
+
+```
+
+Check sample distributions
+
+```{r}
+boxplot(df)
+
+```
+
+Normalize data and re check
+
+```{r}
+df_normalized <- medianScaling(df)
+
+boxplot(df_normalized)
+```
+
+Create Summarized Experiment
+
+```{r}
+se_raw <- PhosphoExperiment(assay = list(df), colData=metadata)
+```
+
+Save to data folder
+
+```{r}
+usethis::use_data(se_raw, overwrite = TRUE)
+```

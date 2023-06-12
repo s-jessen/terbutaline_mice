@@ -1,0 +1,16 @@
+label	condition	replicate
+ter01	terbutaline	1
+ter02	terbutaline	2
+ter03	terbutaline	3
+pbs01	pbs	4
+pbs02	pbs	5
+pbs03	pbs	6
+pbs04	pbs	7
+ter05	terbutaline	8
+ter06	terbutaline	9
+ter07	terbutaline	10
+ter08	terbutaline	11
+pbs05	pbs	12
+pbs06	pbs	13
+pbs07	pbs	14
+pbs08	pbs	15

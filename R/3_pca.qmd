@@ -1,0 +1,263 @@
+---
+title: "3_pca"
+format: html
+editor: visual
+---
+
+```{r, message=FALSE, error=FALSE}
+
+source("R/libraries.R")
+source("R/functions.R")
+source("R/metadata.R")
+source("R/data_files_and_results.R")
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+```
+
+PCA on terbutaline pre vs. post
+
+```{r}
+#Create PCA dataframe
+df_wide_ter <- df_long %>% 
+    dplyr::filter(intervention=="terbutaline") %>% 
+    dplyr::select(c("protein", "id", "abundance", "time")) %>% 
+    pivot_wider(names_from = protein, values_from = abundance)%>% 
+    mutate_if(is.numeric, scale)
+
+
+#Set seed for reproducible imputation
+set.seed(99)
+
+#Run PCA analysis
+pc_ter <- pca(df_wide_ter, method="ppca", nPcs=2) 
+
+#Merge analysis wit PCA data frame
+df_wide_ter <- merge(df_wide_ter, scores(pc_ter), by=0) %>% 
+    dplyr::select(-"Row.names") 
+
+#Visualize
+ggplot(df_wide_ter, aes(PC1, PC2, color=time, label=id))+
+    geom_point(size=4)+
+    #geom_line(aes(group = id), alpha=0.2, color="black")+
+    #stat_ellipse(lwd=1)+
+    scale_color_manual(values=c("#069DBF", "#024059"),
+                       labels = c("Post",
+                               "Pre"))+
+    #geom_text_repel(point.size=4, size=5, min.segment.length = Inf, force=0.3)+
+    theme(
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        panel.grid.minor=element_blank(),
+        panel.grid.major = element_blank(),
+        axis.line = element_line(colour = "black"),
+        legend.text=element_text(size=15),
+        legend.title = element_blank(),
+        legend.key = element_blank(),
+        axis.text.x = element_text(color="black", size=15),
+        axis.text.y = element_text(color="black", size=15),
+        axis.title=element_text(size=15)
+        )+
+    xlab(paste("Principal component 1 (", round(pc_ter@R2[1] * 100, digits = 1), "% of variance)", sep=""))+
+    ylab(paste("Principal component 2 (", round(pc_ter@R2[2] * 100, digits = 1), "% of variance)", sep=""))+
+    ggtitle("PCA of log2fold changes in terbutaline")
+
+ggsave('data/figures/pca/pca_l2fc_ter.pdf')
+```
+
+PCA on resistance training pre vs.post
+
+```{r}
+#Create PCA dataframe
+df_wide_res <- df_long %>% 
+    dplyr::filter(intervention=="resistance") %>% 
+    dplyr::select(c("protein", "id", "abundance", "time")) %>% 
+    pivot_wider(names_from = protein, values_from = abundance)%>% 
+    mutate_if(is.numeric, scale)
+
+
+#Set seed for reproducible imputation
+set.seed(99)
+
+#Run PCA analysis
+pc_res <- pca(df_wide_res, method="ppca", nPcs=2) 
+
+#Merge analysis wit PCA data frame
+df_wide_res <- merge(df_wide_res, scores(pc_res), by=0) %>% 
+    dplyr::select(-"Row.names") 
+
+#Visualize
+ggplot(df_wide_res, aes(PC1, PC2, color=time, label=id))+
+    geom_point(size=4)+
+    #geom_line(aes(group = id), alpha=0.2, color="black")+
+    #stat_ellipse(lwd=1)+
+    scale_color_manual(values=c("#069DBF", "#024059"),
+                       labels = c("Post",
+                               "Pre"))+
+   #geom_text_repel(point.size=4, size=5, min.segment.length = Inf, force=0.3)+
+    theme(
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        panel.grid.minor=element_blank(),
+        panel.grid.major = element_blank(),
+        axis.line = element_line(colour = "black"),
+        legend.text=element_text(size=15),
+        legend.title = element_blank(),
+        legend.key = element_blank(),
+        axis.text.x = element_text(color="black", size=15),
+        axis.text.y = element_text(color="black", size=15),
+        axis.title=element_text(size=15)
+        )+
+    xlab(paste("Principal component 1 (", round(pc_res@R2[1] * 100, digits = 1), "% of variance)", sep=""))+
+    ylab(paste("Principal component 2 (", round(pc_res@R2[2] * 100, digits = 1), "% of variance)", sep=""))+
+    ggtitle("PCA of log2fold changes in resistance")
+```
+
+PCA on all, pre vs. post
+```{r}
+#Create PCA dataframe
+df_wide <- df_long %>% 
+    dplyr::select(c("protein", "id", "abundance", "time")) %>% 
+    pivot_wider(names_from = protein, values_from = abundance)%>% 
+    mutate_if(is.numeric, scale)
+
+
+#Set seed for reproducible imputation
+set.seed(99)
+
+#Run PCA analysis
+pc <- pca(df_wide, method="ppca", nPcs=2) 
+
+#Merge analysis wit PCA data frame
+df_wide <- merge(df_wide, scores(pc), by=0) %>% 
+    dplyr::select(-"Row.names") 
+
+#Visualize
+ggplot(df_wide, aes(PC1, PC2, color=time))+
+    geom_point(size=4)+
+    #geom_line(aes(group = id), alpha=0.2, color="black")+
+    #stat_ellipse(lwd=1)+
+    scale_color_manual(values=c("#069DBF", "#024059"),
+                       labels = c("Post",
+                               "Pre"))+
+    #geom_text_repel(point.size=4, size=5, min.segment.length = Inf, force=0.3)+
+    theme(
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        panel.grid.minor=element_blank(),
+        panel.grid.major = element_blank(),
+        legend.title = element_blank(),
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, linewidth=1),
+        text = element_text(size = 18, color="black"),
+        axis.text = element_text(color="black", size=18)
+        )+
+    xlab(paste("Principal component 1 (", round(pc@R2[1] * 100, digits = 1), "% of variance)", sep=""))+
+    ylab(paste("Principal component 2 (", round(pc@R2[2] * 100, digits = 1), "% of variance)", sep=""))+
+    ggtitle("PCA of pre and post samples")
+
+ggsave('data/figures/pca/pca_pre_vs_post_all.pdf')
+```
+
+
+PCA of l2fc changes in both groups (scaled)
+
+```{r}
+#Create PCA dataframe
+df_wide_l2fc <- df_long_l2fc %>% 
+    dplyr::select(c("protein", "id", "l2fc")) %>% 
+    pivot_wider(names_from = protein, values_from = l2fc) %>% 
+    select_if(~ !all(is.na(.))) %>% 
+    mutate_if(is.numeric, scale)
+
+
+#Set seed for reproducible imputation
+set.seed(99)
+
+#Run PCA analysis
+pc_l2fc <- pca(df_wide_l2fc, method="ppca", nPcs=2) 
+
+#Merge analysis wit PCA data frame
+df_wide_l2fc <- merge(df_wide_l2fc, scores(pc_l2fc), by=0) %>% 
+    dplyr::select(-"Row.names") %>% 
+    merge((metadata %>% dplyr::filter(time == "post")), by="id") %>% 
+    dplyr::select(-c("time", "lean", "delta_lean", "leg_lean"))
+
+#Visualize
+ggplot(df_wide_l2fc, aes(PC1, PC2, color=intervention))+
+    geom_point(size=10)+
+    #geom_line(aes(group = id), alpha=0.2, color="black")+
+    #stat_ellipse(lwd=1)+
+    scale_color_manual(values=c("#355C7D", "#C06C84"),
+                       labels = c("Resistance training",
+                               "Terbutaline"))+
+    #geom_text_repel(point.size=4, size=5, min.segment.length = Inf, force=0.3)+
+    theme(
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        panel.grid.minor=element_blank(),
+        panel.grid.major = element_blank(),
+        legend.title = element_blank(),
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, linewidth=1)
+        )+
+    xlab(paste("Principal component 1 (", round(pc_l2fc@R2[1] * 100, digits = 1), "% of variance)", sep=""))+
+    ylab(paste("Principal component 2 (", round(pc_l2fc@R2[2] * 100, digits = 1), "% of variance)", sep=""))+
+    ggtitle("PCA of log2fold changes in each intervention")
+
+ggsave('data/figures/pca/pca_l2fc_both.pdf', width=10, height=8)
+```
+
+
+UMAP (l2fc, both groups)
+```{r}
+#Create data set
+df_wide_umap <- df_long_l2fc %>% 
+    dplyr::select(c("protein", "id", "l2fc")) %>% 
+    pivot_wider(names_from = protein, values_from = l2fc) %>% 
+    select_if(~ !all(is.na(.))) %>% 
+    mutate_if(is.numeric, scale) %>% 
+    column_to_rownames("id") %>% 
+    scale()
+
+#Set seed for reproducible imputation
+set.seed(99)
+
+#Create UMAP
+umap <- umap(df_wide_umap) 
+
+#Extract components of UMAP to data frame
+df_umap <- umap$layout %>% 
+    as.data.frame() %>% 
+    dplyr::rename(UMAP1 = V1,
+                  UMAP2 = V2) %>% 
+    rownames_to_column("id") %>% 
+    inner_join(subset(metadata, time == "post")[,c("intervention", "id")], by="id")
+
+#Visualize
+df_umap %>% 
+    ggplot(aes(x=UMAP1, y=UMAP2, color=intervention))+
+    geom_point(size=10)+
+    scale_color_manual(values=c("#355C7D", "#C06C84"),
+                       labels = c("Resistance training",
+                               "Terbutaline"))+
+    theme(
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        panel.grid.minor=element_blank(),
+        panel.grid.major = element_blank(),
+        legend.title = element_blank(),
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, linewidth=1)
+        )
+
+```
+

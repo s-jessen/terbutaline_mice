@@ -1,0 +1,73 @@
+---
+title: "0_data_validation"
+format: html
+editor: visual
+---
+
+```{r}
+source(here::here("R/libraries.R"))
+source(here::here("R/functions.R"))
+```
+
+Load in data
+
+```{r}
+
+df <- read_xlsx('data-raw/gastroc_v2.xlsx') %>% 
+    dplyr::select(-c(2:3, 5))%>% 
+    mutate(genes = gsub(";.*", "", genes)) %>% 
+    mutate(protein_group = gsub(";.*", "", protein_group)) %>% 
+    mutate_at(3:17, as.numeric)
+   
+
+```
+
+```{r}
+
+df_raw <- make_unique(df, "genes", "protein_group", delim = ";")
+
+```
+
+```{r}
+df_raw$name %>% duplicated() %>% any()
+```
+
+```{r}
+experimental_design <- read.table('data-raw/experimental_design.txt', header=TRUE, sep="\t", stringsAsFactors = FALSE,  row.names=NULL)
+df_se <- make_se(df_raw, 3:17, experimental_design)
+```
+
+Number of proteins identified in each sample.
+
+```{r}
+plot_numbers(df_se)
+```
+
+Missing values (before filtering)
+
+```{r}
+plot_missval(df_se)
+
+```
+
+Look at sample distributions
+
+```{r}
+
+plot_normalization(df_se)
+
+```
+
+Plot normalization, limma
+
+```{r}
+
+plotDensities(assay(df_se))
+
+```
+
+```{r}
+
+plot_detect(df_se)
+
+```

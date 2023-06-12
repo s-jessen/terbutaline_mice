@@ -1,0 +1,106 @@
+---
+title: "gsea_figures"
+format: html
+editor: visual
+---
+
+```{r, message=FALSE, error=FALSE}
+source("R/libraries.R")
+source("R/functions.R")
+source("R/data_files_and_results.R")
+source("R/metadata.R")
+source("R/gsea_results.R")
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+set.seed(123)
+```
+
+clusterProfiler dotplots
+```{r}
+#TER BP
+dotplot(gsea_ter_bp_filtered, showCategory=10, title="GO:BP")+facet_grid(.~.sign, labeller=as_labeller(c(
+    `activated` = "Enriched",
+    `suppressed` = "Depleted")))
+
+#Save to folder
+ggsave('data/figures/gsea/dotplot_ter_bp.pdf', height=5)
+
+
+#TER CC
+dotplot(gsea_ter_cc_filtered, showCategory=10, title="GO:BP")+facet_grid(.~.sign, labeller=as_labeller(c(
+    `activated` = "Enriched",
+    `suppressed` = "Depleted")))
+
+#Save to folder
+ggsave('data/figures/gsea/dotplot_ter_cc.pdf', height=5)
+
+#RES BP
+dotplot(gsea_res_bp_filtered, showCategory=10, title="GO:BP")+facet_grid(.~.sign, labeller=as_labeller(c(
+    `activated` = "Enriched",
+    `suppressed` = "Depleted")))
+
+#Save to folder
+ggsave('data/figures/gsea/dotplot_res_bp.pdf', height=5)
+
+#RES CC
+dotplot(gsea_res_cc_filtered, showCategory=10, title="GO:BP")+facet_grid(.~.sign, labeller=as_labeller(c(
+    `activated` = "Enriched",
+    `suppressed` = "Depleted")))
+
+#Save to folder
+ggsave('data/figures/gsea/dotplot_res_cc.pdf', height=5)
+
+
+```
+
+
+Bubble volcano
+```{r}
+bubble_volcano(gsea_ter_bp_filtered)
+
+#ggsave('data/figures/gsea/bubble_volcano_ter_bp.svg', width=15, height=10)
+
+bubble_volcano(gsea_ter_cc_filtered)
+
+#ggsave('data/figures/gsea/bubble_volcano_ter_cc.svg', width=15, height=10)
+
+bubble_volcano(gsea_res_bp_filtered)
+
+#ggsave('data/figures/gsea/bubble_volcano_res_bp.svg', width=15, height=10)
+
+bubble_volcano(gsea_res_cc_filtered)
+
+#ggsave('data/figures/gsea/bubble_volcano_res_cc.svg', width=15, height=10)
+```
+
+
+Bubble plot, both interventions (CC)
+```{r}
+bubble_volcano_both(gsea_ter_bp_filtered, gsea_res_bp_filtered)
+
+#ggsave('data/figures/gsea/bubbleplot_cc_both.pdf', width=15, height=15)
+```
+
+Ranked bubbleplots
+```{r}
+
+bubble_rank(gsea_ter_bp_filtered)
+
+#ggsave('data/figures/gsea/cc_alternative_bubbleplot_ter.svg', width=6)
+
+bubble_rank(gsea_ter_cc_filtered)
+
+#ggsave('data/figures/gsea/cc_alternative_bubbleplot_ter.svg', width=6)
+
+bubble_rank(gsea_res_bp_filtered)
+
+#ggsave('data/figures/gsea/cc_alternative_bubbleplot_ter.svg', width=6)
+
+bubble_rank(gsea_res_cc_filtered)
+
+#ggsave('data/figures/gsea/cc_alternative_bubbleplot_ter.svg', width=6)
+
+
+```
+
