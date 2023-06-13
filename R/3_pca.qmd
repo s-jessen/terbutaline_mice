@@ -62,6 +62,8 @@ ggplot(df_wide, aes(PC1, PC2, color=intervention, label=sample))+
     xlab(paste("Principal component 1 (", round(pc@R2[1] * 100, digits = 1), "% of variance)", sep=""))+
     ylab(paste("Principal component 2 (", round(pc@R2[2] * 100, digits = 1), "% of variance)", sep=""))
 
+write_xlsx(df_wide, 'data/pca.xlsx')
+
 ggsave('data/figures/pca.pdf')
 ```
 
