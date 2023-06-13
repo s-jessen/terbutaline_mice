@@ -88,3 +88,26 @@ hist(q_values)
 plot(q_values)
 ```
 
+
+```{r}
+#Load data
+load(here::here("data/se.rda"))
+
+#Create long form data frame for all data
+df_long <- assay(se) %>% 
+    rownames_to_column(var="protein") %>% 
+    melt(id.var="protein") %>% # Make data long form
+    dplyr::rename(sample = variable,
+           abundance = value) %>% 
+    merge((metadata %>% rownames_to_column("sample")), by="sample") #Nested function. Merge with metadata, but first metadata has its row names moved to a column called "sample" which is then used for merging.
+
+
+
+#Export for figures
+write_xlsx(df_long, "data/df_long.xlsx")
+
+#Save to data folder
+usethis::use_data(df_long, overwrite = TRUE)
+
+```
+

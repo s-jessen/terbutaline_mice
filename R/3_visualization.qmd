@@ -6,77 +6,35 @@ editor: visual
 
 ```{r, message=FALSE, error=FALSE}
 
-source("R/libraries.R")
-source("R/functions.R")
-source("R/data_files_and_results.R")
-source("R/metadata.R")
+source(here::here("R/libraries.R"))
+source(here::here("R/functions.R"))
+load(file='data/results.rda')
+load(file='data/metadata.rda')
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
-# Volcano, Terbutaline
+# Volcano
 
 ```{r}
-volcano(results_ter_t, q, 0.1)
+volcano(results, xiao, 0.05)
+
+ggsave('data/figures/volcano.pdf')
 ```
 
-# Volcano, Resistance
-
-```{r}
-volcano(results_res_t, q, 0.1)
-```
-
-# regulation correlation
-
-```{r}
-regulation_correlation <- merge(x=results_ter_t, y=results_res_t, by=0) %>% 
-    dplyr::select(c("logFC.x", "logFC.y", "protein.x")) %>% 
-    dplyr::rename(protein = protein.x,
-                  l2fc_ter = logFC.x,
-                  l2fc_res = logFC.y)
-    
-regulation_correlation %>%
-    ggplot(aes(x=l2fc_ter, y=l2fc_res, label=protein))+
-     geom_point(color = "dodgerblue3", alpha=0.6, size = 2)+
-                           theme(panel.background = element_rect(fill = "transparent", colour = NA),
-                                 plot.background = element_rect(fill = "transparent", colour = NA),
-                                 panel.grid.minor=element_blank(),
-                                 panel.grid.major = element_blank(),
-                                 axis.line = element_line(color="black"),
-                                 text = element_text(size = 15),
-                                 legend.position = "none",
-                                axis.text.x= element_text(color="black", size=15),
-                                axis.text.y= element_text(color="black", siz=15)
-                                 )+
-    geom_text_repel(point.size=2, size=3, force=0.5, min.segment.length = 0.1)+
-    geom_vline(xintercept = 0, linetype="dashed", 
-             color = "black", linewidth=0.25)+
-    geom_hline(yintercept = 0, linetype="dashed", 
-             color = "black", linewidth=0.25)
-
-write_xlsx(regulation_correlation, "data/regulation_correlation.xlsx")
-
-
-```
-
-Proteins regulated by both treatments
-
-```{r}
-intersect(dplyr::filter(results_ter_t, q <0.1 & logFC > 0)$protein, dplyr::filter(results_res_t, q <0.1 & logFC > 0)$protein)
-```
 
 Euler
 
 ```{r}
-plot(
+euler <- plot(
     euler(
         list(
-            Quantified = unique(c(row.names(results_res_t), row.names(results_ter_t))),
-            "Regulated with terbutaline" = dplyr::filter(results_ter_t, q <0.1)$protein,
-            "Regulated with resistance training" = dplyr::filter(results_res_t, q <0.1)$protein
+            Quantified = unique(c(row.names(results), row.names(results))),
+            "Upregulated with terbutaline" = dplyr::filter(results, xiao <0.05 & logFC > 0)$protein,
+            "Downregulated with terbutaline" = dplyr::filter(results, xiao <0.05 & logFC < 0)$protein
         )
         ),fills = c("white", "#C06C84", "#355C7D"), quantities = list(type = "counts"), legend =TRUE
     )
 
-#ggsave('data/figures/euler.pdf', plot=euler, width=12)
+ggsave('data/figures/euler.pdf', plot=euler, width=12)
 ```

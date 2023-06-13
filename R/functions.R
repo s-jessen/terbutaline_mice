@@ -29,7 +29,7 @@ volcano <- function (dataset, type, threshold) {
               axis.text.x = element_text(color="black", size=10),
               axis.text.y = element_text(color="black", size=10),
               legend.position = "none")+
-        geom_text_repel(point.size=4, size=3, min.segment.length = 0.1, force=0.3)+
+        geom_text_repel(point.size=3, size=3, min.segment.length = Inf, force=0.3)+
         scale_color_manual(breaks = c("Upregulated", "Downregulated", "Unchanged"),
                            values=c("dodgerblue3", "firebrick3", "gray50"))+
         scale_alpha_manual(breaks = c("Upregulated", "Downregulated", "Unchanged"),

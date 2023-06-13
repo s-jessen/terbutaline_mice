@@ -17,7 +17,7 @@ load(file='data/metadata.rda')
 set.seed(123)
 ```
 
-GSEA ter, BP
+GSEA, BP
 
 ```{r}
 
@@ -36,7 +36,7 @@ gsea_bp <- gseGO(
                     geneList = gsea_list,
                     OrgDb = org.Mm.eg.db,
                     ont = "BP",
-                    pvalueCutoff = 0.05,
+                    pvalueCutoff = 0.1,
                     keyType = "SYMBOL",
                     eps=0,
                     maxGSSize = 200
