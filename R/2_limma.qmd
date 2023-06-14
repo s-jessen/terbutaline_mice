@@ -74,7 +74,6 @@ write_xlsx(as.data.frame(dplyr::filter(results, xiao > 0.05)), 'data/limma/resul
 usethis::use_data(results, overwrite = TRUE)
 ```
 
-
 **qvalue inspection**
 
 ```{r}
@@ -87,7 +86,6 @@ summary(q_values)
 hist(q_values)
 plot(q_values)
 ```
-
 
 ```{r}
 #Load data
@@ -110,4 +108,3 @@ write_xlsx(df_long, "data/df_long.xlsx")
 usethis::use_data(df_long, overwrite = TRUE)
 
 ```
-
